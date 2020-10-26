@@ -145,6 +145,20 @@ class World:
     def del_prey(self, prey):
         self.prey_list.remove(prey)
 
+    def get_obs(self):
+        out = {}
+        for p in self.predator_list:
+            name = "pred_" + str(p.id)
+            closest = self.closest_prey(p)
+            out[name] = [p.age, p.en_lvl, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
+
+        for p in self.prey_list:
+            name = "prey_" + str(p.id)
+            closest = self.closest_pred(p)
+            out[name] = [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
+
+        return out
+
     def get_pred_obs(self):
         out = np.array([])
         for p in self.predator_list:
@@ -159,20 +173,42 @@ class World:
             np.append(out, [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]])
         return out
 
+    def get_rewards(self):
+        out = {}
+        for p in self.predator_list:
+            name = "pred_" + str(p.id)
+            out[name] = len(self.predator_list)
+
+        for p in self.prey_list:
+            name = "prey_" + str(p.id)
+            out[name] = len(self.prey_list)
+
+        return out
+
     def get_pred_rewards(self):
         out = np.array([])
-        for p in self.predator_list:
-            # TODO implement
-            i = 0
-            np.append(out, i)
+        pred_len = len(self.predator_list)
+        for _ in self.predator_list:
+            np.append(out, pred_len)
         return out
 
     def get_prey_rewards(self):
         out = np.array([])
+        prey_len = len(self.prey_list)
+        for _ in self.prey_list:
+            np.append(out, prey_len)
+        return out
+
+    def get_dones(self):
+        out = {}
+        for p in self.predator_list:
+            name = "pred_" + str(p.id)
+            out[name] = self.done
+
         for p in self.prey_list:
-            # TODO implement
-            i = 0
-            np.append(out, i)
+            name = "prey_" + str(p.id)
+            out[name] = self.done
+
         return out
 
     def get_pred_dones(self):
