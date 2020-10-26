@@ -1,12 +1,21 @@
 import ray
 import os
+import gym
 from ray import tune
 from ray.rllib.models import ModelCatalog
+from ray.tune.registry import register_env
 
-from dqn import DQNTrainer, DQNModel
+from DQN.dqn import DQNTrainer, DQNModel
+from Env import predatorEnv
+from Env.predatorEnv import PredatorEnv
+
+
+def env_creator(env_config):
+    return PredatorEnv((20, 20), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
 
 if __name__ == "__main__":
     ray.init()
+    register_env("predEnv", env_creator)
     ModelCatalog.register_custom_model("DQNModel", DQNModel)
 
     tune.run(
@@ -19,7 +28,7 @@ if __name__ == "__main__":
             "num_workers": 1,
             "framework": "torch",
             "rollout_fragment_length": 50,
-            "env": "CartPole-v1",
+            "env": "predEnv",
 
             ########################################
             # Parameters Agent

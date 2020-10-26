@@ -3,7 +3,7 @@ import numpy as np
 import math
 
 from gym import spaces
-from world import World
+from Env.world import World
 
 
 class PredatorEnv(gym.Env):

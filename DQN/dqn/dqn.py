@@ -7,7 +7,7 @@ import logging
 from ray.rllib.agents import with_common_config
 from ray.rllib.agents.trainer_template import build_trainer
 
-from dqn.dqn_policy import DQNPolicy
+from DQN.dqn.dqn_policy import DQNPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ DEFAULT_CONFIG = with_common_config({
                 {
                     "type": "linear",
                     "input": 64,
-                    "output": 2
+                    "output": 4
                 }
             ]
         },  # extra options to pass to your model

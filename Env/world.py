@@ -2,10 +2,10 @@ import random
 import math
 import numpy as np
 
-from prey import Prey
-from predator import Predator
-from simulator import Simulator
-from stats import Stats
+from Env.prey import Prey
+from Env.predator import Predator
+from Env.simulator import Simulator
+from Env.stats import Stats
 
 
 class World:

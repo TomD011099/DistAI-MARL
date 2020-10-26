@@ -1,6 +1,6 @@
-from dqn.dqn import DQNTrainer
-from dqn.dqn_policy import DQNPolicy
-from dqn.dqn_model import DQNModel
+from DQN.dqn.dqn import DQNTrainer
+from DQN.dqn.dqn_policy import DQNPolicy
+from DQN.dqn.dqn_model import DQNModel
 
 
 __all__ = [

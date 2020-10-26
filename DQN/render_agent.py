@@ -5,14 +5,14 @@ import numpy as np
 
 from ray import tune
 from ray.rllib.models import ModelCatalog
-from dqn import DQNTrainer, DQNModel
+from DQN.dqn import DQNTrainer, DQNModel
 
 
 if __name__ == "__main__":
 
     # Settings
     folder = "/home/simon/ray_results/DQNAlgorithm/DQNAlgorithm_CartPole-v1_0_2020-10-12_10-06-41g8gxpv90"
-    env_name = "CartPole-v1"
+    env_name = "PredatorEnv"
     checkpoint = 221
     num_episodes = 1
 
