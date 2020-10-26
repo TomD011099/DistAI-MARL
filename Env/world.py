@@ -2,10 +2,10 @@ import random
 import math
 import numpy as np
 
-from prey import Prey
-from predator import Predator
-from simulator import Simulator
-from stats import Stats
+from Env.prey import Prey
+from Env.predator import Predator
+from Env.simulator import Simulator
+from Env.stats import Stats
 
 
 class World:
@@ -32,7 +32,7 @@ class World:
 
         self.stats = Stats(prey_amount, pred_amount)
 
-        self.simulator = Simulator(map_size)
+        # self.simulator = Simulator(map_size)
 
     def step(self, actions=None, env_type=None):
         self.t += 1
@@ -78,8 +78,7 @@ class World:
             self.del_pred(p)
 
         self.stats.update(len(self.prey_list), len(self.predator_list), self.t)
-        self.done = self.simulator.update(self.predator_list, self.prey_list) or (len(self.predator_list) == 0 and len(
-            self.prey_list) == 0) or self.t >= self.max_t
+        self.done = (len(self.predator_list) == 0 and len(self.prey_list) == 0) or self.t >= self.max_t
         return self.done
 
     def close_food(self, pred):
@@ -101,7 +100,7 @@ class World:
         for p in self.predator_list:
             dx = prey.pos[0] - p.pos[0]
             dy = prey.pos[1] - p.pos[1]
-            d = dx*dx + dy*dy
+            d = dx * dx + dy * dy
             if d < closest_distance:
                 closest_distance = d
                 closest = [p]

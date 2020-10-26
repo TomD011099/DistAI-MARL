@@ -2,7 +2,7 @@ import gym
 import numpy as np
 
 from gym import spaces
-from world import World
+from Env.world import World
 
 
 class PreyEnv(gym.Env):

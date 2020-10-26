@@ -1,6 +1,6 @@
 import time
 
-from world import World
+from Env.world import World
 
 if __name__ == "__main__":
     # Prey settings:

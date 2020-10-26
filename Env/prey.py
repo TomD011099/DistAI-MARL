@@ -1,7 +1,5 @@
 import random
 
-from gym import spaces
-
 
 class Prey:
     def __init__(self, world, map_size, prey_id, prey_settings, pos=None):
