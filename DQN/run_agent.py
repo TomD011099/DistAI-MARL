@@ -13,6 +13,7 @@ from Env.predatorEnv import PredatorEnv
 def env_creator(env_config):
     return PredatorEnv((20, 20), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
 
+
 if __name__ == "__main__":
     ray.init()
     register_env("predEnv", env_creator)

@@ -29,7 +29,7 @@ class DQNPolicy(Policy):
         self.dqn_model = ModelCatalog.get_model_v2(
             obs_space=self.observation_space,
             action_space=self.action_space,
-            num_outputs=2,
+            num_outputs=5,
             name="DQNModel",
             model_config=self.config["dqn_model"],
             framework="torch",
@@ -53,12 +53,11 @@ class DQNPolicy(Policy):
                         **kwargs):
         # Worker function
 
+        print("Compute actions")
         self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
         if random.random() < self.epsilon:
-            # print("random")
             return [self.action_space.sample() for _ in obs_batch], [], {}
         else:
-            # print("Not random")
             obs_batch_t = torch.tensor(obs_batch).type(torch.FloatTensor)
             value = self.dqn_model(obs_batch_t)
             indices = torch.max(value, 1)[1]
@@ -120,6 +119,7 @@ class DQNPolicy(Policy):
         self.optim.zero_grad()
         loss.backward()
         self.optim.step()
+        print("End of learn")
         return {"learner_stats": {"loss": loss.item()}}
 
     def get_weights(self):

@@ -54,7 +54,7 @@ DEFAULT_CONFIG = with_common_config({
                 {
                     "type": "linear",
                     "input": 64,
-                    "output": 4
+                    "output": 5
                 }
             ]
         },  # extra options to pass to your model

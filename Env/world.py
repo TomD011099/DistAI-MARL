@@ -78,7 +78,7 @@ class World:
             self.del_pred(p)
 
         self.stats.update(len(self.prey_list), len(self.predator_list), self.t)
-        self.done = (len(self.predator_list) == 0 and len(self.prey_list) == 0) or self.t >= self.max_t
+        self.done = (len(self.predator_list) == 0 or len(self.prey_list) == 0) or self.t >= self.max_t
         return self.done
 
     def close_food(self, pred):
@@ -160,17 +160,19 @@ class World:
         return out
 
     def get_pred_obs(self):
-        out = np.array([])
+        out = {}
         for p in self.predator_list:
+            name = "pred_" + str(p.id)
             closest = self.closest_prey(p)
-            np.append(out, [p.age, p.en_lvl, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]])
+            out[name] = [p.age, p.en_lvl, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
         return out
 
     def get_prey_obs(self):
-        out = np.array([])
+        out = {}
         for p in self.prey_list:
+            name = "prey_" + str(p.id)
             closest = self.closest_pred(p)
-            np.append(out, [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]])
+            out[name] = [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
         return out
 
     def get_rewards(self):
@@ -186,17 +188,17 @@ class World:
         return out
 
     def get_pred_rewards(self):
-        out = np.array([])
-        pred_len = len(self.predator_list)
-        for _ in self.predator_list:
-            np.append(out, pred_len)
+        out = {}
+        for p in self.predator_list:
+            name = "pred_" + str(p.id)
+            out[name] = len(self.predator_list)
         return out
 
     def get_prey_rewards(self):
-        out = np.array([])
-        prey_len = len(self.prey_list)
-        for _ in self.prey_list:
-            np.append(out, prey_len)
+        out = {}
+        for p in self.prey_list:
+            name = "prey_" + str(p.id)
+            out[name] = len(self.prey_list)
         return out
 
     def get_dones(self):
@@ -212,15 +214,7 @@ class World:
         return out
 
     def get_pred_dones(self):
-        if self.done:
-            out = np.ones(len(self.predator_list), dtype=bool)
-        else:
-            out = np.zeros(len(self.predator_list), dtype=bool)
-        return out
+        return {"__all__": self.done}
 
     def get_prey_dones(self):
-        if self.done:
-            out = np.ones(len(self.prey_list), dtype=bool)
-        else:
-            out = np.zeros(len(self.prey_list), dtype=bool)
-        return out
+        return {"__all__": self.done}
