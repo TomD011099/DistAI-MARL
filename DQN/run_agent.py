@@ -34,16 +34,16 @@ if __name__ == "__main__":
             ########################################
             # Parameters Agent
             ########################################
-            "lr": 0.004,
-            # "lr": tune.grid_search([0.003, 0.004, 0.005, 0.006, 0.007]),
+            "lr": 0.001,
+            # "lr": tune.grid_search([0.001, 0.0025, 0.005, 0.01, 0.015]),
             "discount": 0.8,
             # "discount": tune.grid_search([0.5, 0.6, 0.7, 0.8, 0.9, 1]),
             "buffer_batch": 1500,
             # "buffer_batch": tune.grid_search([1000, 1500, 2500]),
-            "epsilon": 0.6,
+            "epsilon": 0.8,
             # "epsilon": tune.grid_search([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]),
-            "decay": 0.999,
-            # "decay": tune.grid_search([0.99, 0.999, 0.9999]),
+            # "decay": 0.999,
+            "decay": tune.grid_search([0.9, 0.99, 0.999, 0.9999, 0.99999, 0.999999]),
             "min_epsilon": 0.05,
             # "min_epsilon": tune.grid_search([0.01, 0.05, 0.1, 0.15, 0.2, 0.25]),
 

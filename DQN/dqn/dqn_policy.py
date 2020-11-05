@@ -53,7 +53,6 @@ class DQNPolicy(Policy):
                         **kwargs):
         # Worker function
 
-        print("Compute actions")
         self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
         if random.random() < self.epsilon:
             return [self.action_space.sample() for _ in obs_batch], [], {}
@@ -119,7 +118,6 @@ class DQNPolicy(Policy):
         self.optim.zero_grad()
         loss.backward()
         self.optim.step()
-        print("End of learn")
         return {"learner_stats": {"loss": loss.item()}}
 
     def get_weights(self):

@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # en_tr = pred_settings[2]
     # en_ppe = pred_settings[3]
     # en_thr = pred_settings[4]
-    world = World((20, 20), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
+    world = World((200, 200), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
 
     stop = False
     while not stop:

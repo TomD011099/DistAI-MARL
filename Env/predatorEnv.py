@@ -24,3 +24,6 @@ class PredatorEnv(gym.Env, MultiAgentEnv):
     def step(self, action):
         self.world.step(actions=action, env_type="pred")
         return self.world.get_pred_obs(), self.world.get_pred_rewards(), self.world.get_pred_dones(), {}
+
+    def render(self, **kwargs):
+        self.world.render()
