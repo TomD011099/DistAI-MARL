@@ -11,7 +11,7 @@ from Env.predatorEnv import PredatorEnv
 
 
 def env_creator(env_config):
-    return PredatorEnv((20, 20), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
+    return PredatorEnv((30, 30), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
 
 
 if __name__ == "__main__":
@@ -34,23 +34,29 @@ if __name__ == "__main__":
             ########################################
             # Parameters Agent
             ########################################
-            "lr": 0.001,
-            # "lr": tune.grid_search([0.001, 0.0025, 0.005, 0.01, 0.015]),
-            "discount": 0.8,
-            # "discount": tune.grid_search([0.5, 0.6, 0.7, 0.8, 0.9, 1]),
-            "buffer_batch": 1500,
+            "lr": 4e-3,
+            # "lr": tune.grid_search([0.1, 0.05, 0.01, 0.005, 0.001, 0.0005]),
+            "discount": 0.985,
+            # "discount": tune.grid_search([0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
+            "bufferlen": 20000,
+            "buffer_batch": 2000,
             # "buffer_batch": tune.grid_search([1000, 1500, 2500]),
-            "epsilon": 0.8,
-            # "epsilon": tune.grid_search([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]),
-            # "decay": 0.999,
-            "decay": tune.grid_search([0.9, 0.99, 0.999, 0.9999, 0.99999, 0.999999]),
-            "min_epsilon": 0.05,
-            # "min_epsilon": tune.grid_search([0.01, 0.05, 0.1, 0.15, 0.2, 0.25]),
+            "epsilon": 1,
+            # "epsilon": tune.grid_search([0.7, 0.8, 0.9, 1]),
+            "decay": 0.99998,
+            # "decay": tune.grid_search([0.999, 0.9999, 0.99999, 0.999999]),
+            "min_epsilon": 0.01,
+            # "min_epsilon": tune.grid_search([0.1, 0.2, 0.2, 0.4, 0.5, 0.6]),
 
             "dqn_model": {
                 "custom_model": "DQNModel",
                 "custom_model_config": {
                 },  # extra options to pass to your model
+            },
+            "evaluation_interval": 100,
+            "evaluation_num_episodes": 100,
+            "evaluation_config": {
+                "epsilon": -1
             }
         }
     )

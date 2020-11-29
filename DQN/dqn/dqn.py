@@ -15,12 +15,12 @@ DEFAULT_CONFIG = with_common_config({
     ########################################
     # Parameters Agent
     ########################################
-    "lr": 0.001,
-    "bufferlen": 100000,
-    "buffer_batch": 100,
-    "discount": 0.8,
+    "lr": 0,
+    "bufferlen": 10000,
+    "buffer_batch": 500,
+    "discount": 0.9,
     "epsilon": 1,
-    "decay": 0.999,
+    "decay": 0.9995,
     "min_epsilon": 0.05,
 
     "dqn_model": {
@@ -30,6 +30,14 @@ DEFAULT_CONFIG = with_common_config({
                 {
                     "type": "linear",
                     "input": 4,
+                    "output": 32
+                },
+                {
+                    "type": "relu"
+                },
+                {
+                    "type": "linear",
+                    "input": 32,
                     "output": 64
                 },
                 {
@@ -38,22 +46,14 @@ DEFAULT_CONFIG = with_common_config({
                 {
                     "type": "linear",
                     "input": 64,
-                    "output": 256
+                    "output": 32
                 },
                 {
                     "type": "relu"
                 },
                 {
                     "type": "linear",
-                    "input": 256,
-                    "output": 64
-                },
-                {
-                    "type": "relu"
-                },
-                {
-                    "type": "linear",
-                    "input": 64,
+                    "input": 32,
                     "output": 5
                 }
             ]

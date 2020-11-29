@@ -4,6 +4,7 @@ from collections import deque
 import random
 import torch
 import numpy as np
+from statistics import mean
 from ray.rllib.policy import Policy
 from ray.rllib.models import ModelCatalog
 import torch.nn.functional as F
@@ -36,7 +37,7 @@ class DQNPolicy(Policy):
         ).to(self.device, non_blocking=True)
         self.replay_buffer = deque(maxlen=self.config["bufferlen"])
         self.buffer_batch = self.config["buffer_batch"]
-        self.optim = torch.optim.Adam(self.dqn_model.parameters(), self.lr)
+        self.optim = torch.optim.Adam(self.dqn_model.parameters(), lr=self.lr)
         self.epsilon = self.config["epsilon"]
         self.min_epsilon = self.config["min_epsilon"]
         self.decay = self.config["decay"]
@@ -53,14 +54,21 @@ class DQNPolicy(Policy):
                         **kwargs):
         # Worker function
 
-        self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
-        if random.random() < self.epsilon:
-            return [self.action_space.sample() for _ in obs_batch], [], {}
-        else:
-            obs_batch_t = torch.tensor(obs_batch).type(torch.FloatTensor)
-            value = self.dqn_model(obs_batch_t)
-            indices = torch.max(value, 1)[1]
-            return indices.numpy(), [], {}
+        obs_batch_t = torch.tensor(obs_batch).type(torch.FloatTensor)
+        value = self.dqn_model(obs_batch_t)
+        actions = torch.argmax(value, 1)
+
+        epsilon_log = []
+        for index in range(len(actions)):
+            self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
+            epsilon_log.append(self.epsilon)
+            if np.random.random() < self.epsilon:
+                actions[index] = random.randint(0, self.action_space.n - 1)
+
+        actions = actions.cpu().detach().tolist()
+
+        return actions, [], {"epsilon_log": epsilon_log}
+        # return [self.action_space.sample() for _ in obs_batch], [], {}
 
     def learn_on_batch(self, samples):
         # Trainer function
@@ -84,19 +92,46 @@ class DQNPolicy(Policy):
         # concatenated (fusing sequences across batches can be unsafe).
         #   unroll_id
 
-        for i in range(len(samples["dones"])):
+        epsilon_log = samples["epsilon_log"]
+
+        # Oplossingscode voor memory
+        obs = samples["obs"]
+        new_obs = samples["new_obs"]
+        rewards = samples["rewards"]
+        actions = samples["actions"]
+        dones = samples["dones"]
+        batch = zip(obs, new_obs, rewards, actions, dones)
+        for obs_s, new_obs_s, rewards_s, actions_s, dones_s in batch:
+            self.replay_buffer.append([obs_s, new_obs_s, rewards_s, actions_s, dones_s])
+
+        # Mijn code voor memory
+        """for i in range(len(samples["dones"])):
             state = samples["obs"][i]
             action = samples["actions"][i]
             reward = samples["rewards"][i]
             done = samples["dones"][i]
             new_state = samples["new_obs"][i]
-            self.replay_buffer.append((state, action, reward, done, new_state))
+            self.replay_buffer.append((state, action, reward, done, new_state))"""
 
         if len(self.replay_buffer) < self.buffer_batch:
-            sample_size = len(self.replay_buffer)
-        else:
-            sample_size = self.buffer_batch
-        batch = random.sample(list(self.replay_buffer), sample_size)
+            return {"learner_stats": {"loss": 0, "epsilon": mean(epsilon_log), "buffer_size": len(self.replay_buffer)}}
+
+        batch = random.sample(self.replay_buffer, self.buffer_batch)
+        samples = {"obs": [None for _ in range(self.buffer_batch)], "new_obs": [None for _ in range(self.buffer_batch)],
+                   "rewards": [None for _ in range(self.buffer_batch)],
+                   "actions": [None for _ in range(self.buffer_batch)],
+                   "dones": [None for _ in range(self.buffer_batch)]}
+
+        i = 0
+        for sample in batch:
+            samples["obs"][i] = sample[0]
+            samples["new_obs"][i] = sample[1]
+            samples["rewards"][i] = sample[2]
+            samples["actions"][i] = sample[3]
+            samples["dones"][i] = sample[4]
+            i += 1
+
+        """batch = random.sample(list(self.replay_buffer), sample_size)
         batch = list(zip(*batch))
         obs_batch_t = torch.cat((torch.tensor(np.array(samples["obs"])).type(torch.FloatTensor),
                                  torch.tensor(np.array(batch[0])).type(torch.FloatTensor)))
@@ -107,18 +142,29 @@ class DQNPolicy(Policy):
         actions_batch_t = torch.cat((torch.tensor(np.array(samples["actions"])).type(torch.LongTensor),
                                      torch.tensor(np.array(batch[1])).type(torch.LongTensor)))
         dones_t = torch.cat((torch.tensor(np.array(samples["dones"])).type(torch.BoolTensor),
-                             torch.tensor(np.array(batch[3])).type(torch.BoolTensor)))
+                             torch.tensor(np.array(batch[3])).type(torch.BoolTensor)))"""
 
-        actions_batch_t = actions_batch_t.unsqueeze(-1)
-        guess = self.dqn_model(obs_batch_t).gather(1, actions_batch_t)
-        max_q = self.dqn_model(new_obs_batch_t).detach().max(1)[0]
-        max_q[dones_t] = 0
+        obs_batch_t = torch.tensor(np.array(samples["obs"])).to(self.device, non_blocking=True).type(torch.FloatTensor)
+        new_obs_batch_t = torch.tensor(np.array(samples["new_obs"])).to(self.device, non_blocking=True).type(
+            torch.FloatTensor)
+        rewards_batch_t = torch.tensor(np.array(samples["rewards"])).to(self.device, non_blocking=True).type(
+            torch.FloatTensor)
+        actions_batch_t = torch.tensor(np.array(samples["actions"])).to(self.device, non_blocking=True).type(
+            torch.LongTensor)
+        dones_t = torch.tensor(np.array(samples["dones"])).to(self.device, non_blocking=True).type(torch.BoolTensor)
+
+        # actions_batch_t = actions_batch_t.unsqueeze(-1)
+        guess = self.dqn_model(obs_batch_t).gather(1, actions_batch_t.unsqueeze(-1)).squeeze(-1)
+        max_q = self.dqn_model(new_obs_batch_t).max(1)[0].detach()
+        max_q[dones_t] = 0.0
         target = rewards_batch_t + (self.discount * max_q)
-        loss = F.mse_loss(guess, target.unsqueeze(1))
+        target = target.detach()
+        loss = F.mse_loss(guess, target)
         self.optim.zero_grad()
         loss.backward()
         self.optim.step()
-        return {"learner_stats": {"loss": loss.item()}}
+        return {"learner_stats": {"loss": loss.cpu().item(), "epsilon": mean(epsilon_log),
+                                  "buffer_size": len(self.replay_buffer)}}
 
     def get_weights(self):
         # Trainer function
