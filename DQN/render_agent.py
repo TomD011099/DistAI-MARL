@@ -6,18 +6,23 @@ import numpy as np
 from ray import tune
 from ray.rllib.models import ModelCatalog
 from DQN.dqn import DQNTrainer, DQNModel
+from Env.predatorEnv import PredatorEnv
+
+
+def env_creator(env_config):
+    return PredatorEnv((20, 20), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
 
 
 if __name__ == "__main__":
 
     # Settings
-    folder = "/home/jonas/ray_results/DQNAlgorithm/DQNAlgorithm_CartPole-v1_0_2020-10-12_10-06-41g8gxpv90"
-    env_name = "PredatorEnv"
-    checkpoint = 221
+    folder = "/home/tom/ray_results/DQNAlgorithm/DQNAlgorithm_predEnv_644d9_00000_0_2020-11-05_11-48-08"
+    # env_name = "predEnv"
+    checkpoint = 1873
     num_episodes = 1
 
     # Def env
-    env = gym.make(env_name)
+    env = env_creator("")
     print(folder + "/params.json")
 
     ray.init()
@@ -26,8 +31,8 @@ if __name__ == "__main__":
     # Load config
     with open(folder + "/params.json") as json_file:
         config = json.load(json_file)
-    trainer = DQNTrainer(env=env_name, 
-                         config=config)
+    trainer = DQNTrainer(env=env, config=config)
+
     # Restore checkpoint
     trainer.restore(folder + "/checkpoint_{}/checkpoint-{}".format(checkpoint, checkpoint))
 
@@ -47,6 +52,6 @@ if __name__ == "__main__":
             total_reward += reward
         print("episode {} received reward {} after {} steps".format(episode, total_reward, step))
         avg_reward += total_reward
-    print('avg reward after {} episodes {}'.format(avg_reward/num_episodes , num_episodes))
+    print('avg reward after {} episodes {}'.format(avg_reward / num_episodes, num_episodes))
     env.close()
     del trainer

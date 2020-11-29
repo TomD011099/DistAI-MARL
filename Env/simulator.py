@@ -15,11 +15,11 @@ class Simulator:
         size = x_max * self.zoom, y_max * self.zoom
         self.screen = pygame.display.set_mode(size)
 
-        self.prey_img = pygame.image.load("img/Prey.png")
+        self.prey_img = pygame.image.load("../Env/img/Prey.png")
         self.prey_img = pygame.transform.scale(self.prey_img, (self.zoom, self.zoom))
         self.prey_rect = self.prey_img.get_rect()
 
-        self.pred_img = pygame.image.load("img/Pred.png")
+        self.pred_img = pygame.image.load("../Env/img/Pred.png")
         self.pred_img = pygame.transform.scale(self.pred_img, (self.zoom, self.zoom))
         self.pred_rect = self.pred_img.get_rect()
 

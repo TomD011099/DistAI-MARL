@@ -6,7 +6,6 @@ from ray.rllib.models import ModelCatalog
 from ray.tune.registry import register_env
 
 from DQN.dqn import DQNTrainer, DQNModel
-from Env import predatorEnv
 from Env.predatorEnv import PredatorEnv
 
 
@@ -42,8 +41,8 @@ if __name__ == "__main__":
             # "buffer_batch": tune.grid_search([1000, 1500, 2500]),
             "epsilon": 0.8,
             # "epsilon": tune.grid_search([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]),
-            # "decay": 0.999,
-            "decay": tune.grid_search([0.9, 0.99, 0.999, 0.9999, 0.99999, 0.999999]),
+            "decay": 0.999999,
+            # "decay": tune.grid_search([0.9, 0.99, 0.999, 0.9999, 0.99999, 0.999999]),
             "min_epsilon": 0.05,
             # "min_epsilon": tune.grid_search([0.01, 0.05, 0.1, 0.15, 0.2, 0.25]),
 

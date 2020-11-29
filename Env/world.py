@@ -32,9 +32,9 @@ class World:
             self.prey_list.append(Prey(self, self.map_size, self.prey_id_cnt, self.prey_settings))
             self.prey_id_cnt += 1
 
-        # self.stats = Stats(prey_amount, pred_amount)
+        self.stats = Stats(prey_amount, pred_amount)
 
-        # self.simulator = Simulator(map_size)
+        self.simulator = Simulator(map_size)
 
     def step(self, actions=None, env_type=None):
         self.t += 1
@@ -79,7 +79,6 @@ class World:
         for p in self.dead_predators:
             self.del_pred(p)
 
-        # self.stats.update(len(self.prey_list), len(self.predator_list), self.t)
         self.done = (len(self.predator_list) == 0 or len(self.prey_list) == 0) or self.t >= self.max_t
         return self.done
 
@@ -235,4 +234,5 @@ class World:
         return {"__all__": self.done}
 
     def render(self):
+        self.stats.update(len(self.prey_list), len(self.predator_list), self.t)
         self.simulator.update(self.predator_list, self.prey_list)
