@@ -7,6 +7,7 @@ from ray import tune
 from ray.rllib.models import ModelCatalog
 from DQN.dqn import DQNTrainer, DQNModel
 from Env.predatorEnv import PredatorEnv
+from ray.tune.registry import register_env
 
 
 def env_creator(env_config):
@@ -14,24 +15,23 @@ def env_creator(env_config):
 
 
 if __name__ == "__main__":
-
     # Settings
     folder = "/home/tom/ray_results/DQNAlgorithm/DQNAlgorithm_predEnv_644d9_00000_0_2020-11-05_11-48-08"
     # env_name = "predEnv"
     checkpoint = 1873
     num_episodes = 1
 
-    # Def env
     env = env_creator("")
     print(folder + "/params.json")
 
     ray.init()
+    register_env("predEnv", env_creator)
     ModelCatalog.register_custom_model("DQNModel", DQNModel)
 
     # Load config
     with open(folder + "/params.json") as json_file:
         config = json.load(json_file)
-    trainer = DQNTrainer(env=env, config=config)
+    trainer = DQNTrainer(env="predEnv", config=config)
 
     # Restore checkpoint
     trainer.restore(folder + "/checkpoint_{}/checkpoint-{}".format(checkpoint, checkpoint))
