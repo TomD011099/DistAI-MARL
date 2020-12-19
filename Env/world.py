@@ -71,6 +71,7 @@ class World:
                 new_predators.append(res[1][1])
             if res[2]:
                 self.dead_predators.append(p)
+
         for p in new_predators:
             self.new_pred(p)
 

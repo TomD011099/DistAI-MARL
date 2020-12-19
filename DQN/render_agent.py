@@ -1,9 +1,8 @@
 import ray
 import json
-import gym
 import numpy as np
+import time
 
-from ray import tune
 from ray.rllib.models import ModelCatalog
 from DQN.dqn import DQNTrainer, DQNModel
 from Env.predatorEnv import PredatorEnv
@@ -16,10 +15,11 @@ def env_creator(env_config):
 
 if __name__ == "__main__":
     # Settings
-    folder = "/home/tom/ray_results/DQNAlgorithm/DQNAlgorithm_predEnv_644d9_00000_0_2020-11-05_11-48-08"
+    folder = "/home/tom/ray_results/DQNAlgorithm_2020-12-19_16-33-09/DQNAlgorithm_predEnv_7f7ae_00000_0_2020-12-19_16" \
+             "-33-09"
     # env_name = "predEnv"
-    checkpoint = 1873
-    num_episodes = 1
+    checkpoint = 1852
+    num_episodes = 2
 
     env = env_creator("")
     print(folder + "/params.json")
@@ -44,14 +44,29 @@ if __name__ == "__main__":
         observation = env.reset()
 
         while not done:
+            time.sleep(0.1)
             step += 1
             env.render()
-            print(observation)
-            action, _, _ = trainer.get_policy().compute_actions([observation], [])
-            observation, reward, done, info = env.step(action[0])
-            total_reward += reward
+
+            obs_batch = []
+            for obs in observation.values():
+                obs = np.array(obs)
+                obs_batch.append(obs)
+
+            action, _, _ = trainer.get_policy().compute_actions(obs_batch, [])
+            action_dict = {}
+            keys = list(observation.keys())
+
+            for i, action in enumerate(action):
+                action_dict[keys[i]] = action
+
+            observation, rewards, done, info = env.step(action_dict)
+            done = done.get("__all__")
+
+            total_reward += sum(rewards.values())
         print("episode {} received reward {} after {} steps".format(episode, total_reward, step))
         avg_reward += total_reward
+        env.world.stats.show_hist()
     print('avg reward after {} episodes {}'.format(avg_reward / num_episodes, num_episodes))
     env.close()
     del trainer
