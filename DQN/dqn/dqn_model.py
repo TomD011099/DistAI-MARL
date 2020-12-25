@@ -1,7 +1,7 @@
-from torch import nn, cat
-from ray.rllib.utils.annotations import override
+from gym.spaces import Box
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
-from gym.spaces import Discrete, Box
+from ray.rllib.utils.annotations import override
+from torch import nn
 
 
 class DQNModel(nn.Module, TorchModelV2):

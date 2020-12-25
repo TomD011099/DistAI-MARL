@@ -8,7 +8,7 @@ from ray.rllib.models import ModelCatalog
 from ray.rllib.policy import Policy
 
 
-class DQNPolicy(Policy):
+class PreyPolicy(Policy):
     """Hand-coded policy that returns random actions."""
 
     def __init__(self, observation_space, action_space, config):

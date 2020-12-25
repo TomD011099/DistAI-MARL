@@ -1,9 +1,8 @@
-import random
 import math
-import numpy as np
+import random
 
-from Env.prey import Prey
 from Env.predator import Predator
+from Env.prey import Prey
 from Env.simulator import Simulator
 from Env.stats import Stats
 
@@ -44,7 +43,7 @@ class World:
         self.dead_predators.clear()
 
         for p in self.prey_list:
-            if env_type == "prey":
+            if env_type == "prey" or env_type == "multi":
                 name = "prey_" + str(p.id)
                 res = p.step(actions[name])
             else:
@@ -58,7 +57,7 @@ class World:
             self.new_prey(p)
 
         for p in self.predator_list:
-            if env_type == "pred":
+            if env_type == "pred" or env_type == "multi":
                 name = "pred_" + str(p.id)
                 res = p.step(actions[name])
             else:
@@ -148,16 +147,8 @@ class World:
         self.prey_list.remove(prey)
 
     def get_obs(self):
-        out = {}
-        for p in self.predator_list:
-            name = "pred_" + str(p.id)
-            closest = self.closest_prey(p)
-            out[name] = [p.age, p.en_lvl, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
-
-        for p in self.prey_list:
-            name = "prey_" + str(p.id)
-            closest = self.closest_pred(p)
-            out[name] = [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
+        out = self.get_pred_obs()
+        out.update(self.get_prey_obs())
 
         return out
 

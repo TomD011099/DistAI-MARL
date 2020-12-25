@@ -1,14 +1,15 @@
-import pygame
 import copy
 import math
+
+import pygame
 
 
 class Simulator:
     def __init__(self, map_size):
         x_max, y_max = map_size
 
-        x_zoom = math.floor(1920/x_max)
-        y_zoom = math.floor(1080/y_max)
+        x_zoom = math.floor(1920 / x_max)
+        y_zoom = math.floor(1080 / y_max)
         self.zoom = min(x_zoom, y_zoom)
 
         pygame.init()

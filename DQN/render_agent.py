@@ -1,12 +1,13 @@
-import ray
 import json
-import numpy as np
 import time
 
+import numpy as np
+import ray
 from ray.rllib.models import ModelCatalog
+from ray.tune.registry import register_env
+
 from DQN.dqn import DQNTrainer, DQNModel
 from Env.predatorEnv import PredatorEnv
-from ray.tune.registry import register_env
 
 
 def env_creator(env_config):
