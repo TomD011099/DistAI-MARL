@@ -187,7 +187,7 @@ class World:
         out = {}
         for p in self.predator_list:
             name = "pred_" + str(p.id)
-            out[name] = len(self.predator_list)
+            out[name] = len(self.predator_list)*100 + p.en_lvl
 
         for p in self.prey_list:
             name = "prey_" + str(p.id)
@@ -199,7 +199,7 @@ class World:
         out = {}
         for p in self.predator_list:
             name = "pred_" + str(p.id)
-            out[name] = len(self.predator_list)
+            out[name] = len(self.predator_list) + (p.en_lvl/1000)
         for p in self.dead_predators:
             name = "pred_" + str(p.id)
             out[name] = 0

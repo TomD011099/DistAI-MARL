@@ -23,7 +23,7 @@ if __name__ == "__main__":
         DQNTrainer,
         # checkpoint_freq=10,
         checkpoint_at_end=True,
-        stop={"episodes_total": 2000},
+        stop={"episodes_total": 20000},
         config={
             "num_gpus": 0,
             "num_workers": 1,
@@ -35,18 +35,18 @@ if __name__ == "__main__":
             # Parameters Agent
             ########################################
             "lr": 4e-3,
-            # "lr": tune.grid_search([0.1, 0.05, 0.01, 0.005, 0.001, 0.0005]),
+            # "lr": tune.grid_search([0.01, 0.015, 0.02, 0.025, 0.03, 0.035]),
             "discount": 0.985,
-            # "discount": tune.grid_search([0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
-            "bufferlen": 20000,
+            # "discount": tune.grid_search([0.7, 0.75, 0.8, 0.85, 0.9, 0.95]),
+            "bufferlen": 200000,
             "buffer_batch": 2000,
-            # "buffer_batch": tune.grid_search([1000, 1500, 2500]),
+            # "buffer_batch": tune.grid_search([1000, 2000, 3000]),
             "epsilon": 1,
             # "epsilon": tune.grid_search([0.7, 0.8, 0.9, 1]),
             "decay": 0.99998,
-            # "decay": tune.grid_search([0.999, 0.9999, 0.99999, 0.999999]),
-            "min_epsilon": 0.01,
-            # "min_epsilon": tune.grid_search([0.1, 0.2, 0.2, 0.4, 0.5, 0.6]),
+            # "decay": tune.grid_search([0.999999, 0.9999999]),
+            # "min_epsilon": 0.01,
+            "min_epsilon": tune.grid_search([0.01, 0.05, 0.1, 0.15, 0.2, 1]),
 
             "dqn_model": {
                 "custom_model": "DQNModel",

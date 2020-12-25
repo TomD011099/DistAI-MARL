@@ -7,6 +7,7 @@ import numpy as np
 from statistics import mean
 from ray.rllib.policy import Policy
 from ray.rllib.models import ModelCatalog
+from torch.nn import MSELoss
 import torch.nn.functional as F
 import torch.nn as nn
 
@@ -35,9 +36,10 @@ class DQNPolicy(Policy):
             model_config=self.config["dqn_model"],
             framework="torch",
         ).to(self.device, non_blocking=True)
-        self.replay_buffer = deque(maxlen=self.config["bufferlen"])
-        self.buffer_batch = self.config["buffer_batch"]
+        # self.replay_buffer = deque(maxlen=self.config["bufferlen"])
+        # self.buffer_batch = self.config["buffer_batch"]
         self.optim = torch.optim.Adam(self.dqn_model.parameters(), lr=self.lr)
+        self.MSE_loss_fn = MSELoss(reduction='mean')
         self.epsilon = self.config["epsilon"]
         self.min_epsilon = self.config["min_epsilon"]
         self.decay = self.config["decay"]
@@ -63,7 +65,7 @@ class DQNPolicy(Policy):
             self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
             epsilon_log.append(self.epsilon)
             if np.random.random() < self.epsilon:
-                actions[index] = random.randint(0, self.action_space.n - 1)
+                actions[index] = self.action_space.sample()
 
         actions = actions.cpu().detach().tolist()
 
@@ -95,14 +97,14 @@ class DQNPolicy(Policy):
         epsilon_log = samples["epsilon_log"]
 
         # Oplossingscode voor memory
-        obs = samples["obs"]
+        """obs = samples["obs"]
         new_obs = samples["new_obs"]
         rewards = samples["rewards"]
         actions = samples["actions"]
         dones = samples["dones"]
         batch = zip(obs, new_obs, rewards, actions, dones)
         for obs_s, new_obs_s, rewards_s, actions_s, dones_s in batch:
-            self.replay_buffer.append([obs_s, new_obs_s, rewards_s, actions_s, dones_s])
+            self.replay_buffer.append([obs_s, new_obs_s, rewards_s, actions_s, dones_s])"""
 
         # Mijn code voor memory
         """for i in range(len(samples["dones"])):
@@ -113,7 +115,7 @@ class DQNPolicy(Policy):
             new_state = samples["new_obs"][i]
             self.replay_buffer.append((state, action, reward, done, new_state))"""
 
-        if len(self.replay_buffer) < self.buffer_batch:
+        """if len(self.replay_buffer) < self.buffer_batch:
             return {"learner_stats": {"loss": 0, "epsilon": mean(epsilon_log), "buffer_size": len(self.replay_buffer)}}
 
         batch = random.sample(self.replay_buffer, self.buffer_batch)
@@ -129,7 +131,7 @@ class DQNPolicy(Policy):
             samples["rewards"][i] = sample[2]
             samples["actions"][i] = sample[3]
             samples["dones"][i] = sample[4]
-            i += 1
+            i += 1"""
 
         """batch = random.sample(list(self.replay_buffer), sample_size)
         batch = list(zip(*batch))
@@ -159,12 +161,13 @@ class DQNPolicy(Policy):
         max_q[dones_t] = 0.0
         target = rewards_batch_t + (self.discount * max_q)
         target = target.detach()
-        loss = F.mse_loss(guess, target)
+        loss = self.MSE_loss_fn(guess, target)
         self.optim.zero_grad()
         loss.backward()
+        for param in self.dqn_model.parameters():
+            param.grad.data.clamp_(-1, 1)
         self.optim.step()
-        return {"learner_stats": {"loss": loss.cpu().item(), "epsilon": mean(epsilon_log),
-                                  "buffer_size": len(self.replay_buffer)}}
+        return {"learner_stats": {"loss": loss.cpu().item(), "epsilon": mean(epsilon_log)}}
 
     def get_weights(self):
         # Trainer function
