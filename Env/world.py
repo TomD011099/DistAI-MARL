@@ -33,7 +33,7 @@ class World:
 
         self.stats = Stats(prey_amount, pred_amount)
 
-        self.simulator = Simulator(map_size)
+        # self.simulator = Simulator(map_size)
 
     def step(self, actions=None, env_type=None):
         self.t += 1
@@ -171,7 +171,13 @@ class World:
         for p in self.prey_list:
             name = "prey_" + str(p.id)
             closest = self.closest_pred(p)
-            out[name] = [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
+            if not closest:
+                out[name] = [p.age, 0, 0]
+            else:
+                out[name] = [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
+        for p in self.dead_prey:
+            name = "prey_" + str(p.id)
+            out[name] = [0, 0, 0]
         return out
 
     def get_rewards(self):
@@ -179,10 +185,15 @@ class World:
         for p in self.predator_list:
             name = "pred_" + str(p.id)
             out[name] = len(self.predator_list)
-
+        for p in self.dead_predators:
+            name = "pred_" + str(p.id)
+            out[name] = 0
         for p in self.prey_list:
             name = "prey_" + str(p.id)
             out[name] = len(self.prey_list)
+        for p in self.dead_prey:
+            name = "prey_" + str(p.id)
+            out[name] = 0
 
         return out
 
@@ -204,7 +215,7 @@ class World:
         return out
 
     def get_dones(self):
-        out = {}
+        out = {"__all__": self.done}
         for p in self.predator_list:
             name = "pred_" + str(p.id)
             out[name] = self.done

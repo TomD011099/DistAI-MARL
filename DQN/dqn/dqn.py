@@ -15,48 +15,18 @@ DEFAULT_CONFIG = with_common_config({
     ########################################
     # Parameters Agent
     ########################################
-    "lr": 0.001,
-    "bufferlen": 100000,
-    "buffer_batch": 100,
-    "discount": 0.8,
+    "lr": 0,
+    "bufferlen": 10000,
+    "buffer_batch": 500,
+    "discount": 0.9,
     "epsilon": 1,
-    "decay": 0.999,
+    "decay": 0.9995,
     "min_epsilon": 0.05,
 
     "dqn_model": {
-        "custom_model": "?",
+        "custom_model": "DQNModel",
         "custom_model_config": {
-            "layers": [
-                {
-                    "type": "linear",
-                    "input": 4,
-                    "output": 64
-                },
-                {
-                    "type": "relu"
-                },
-                {
-                    "type": "linear",
-                    "input": 64,
-                    "output": 256
-                },
-                {
-                    "type": "relu"
-                },
-                {
-                    "type": "linear",
-                    "input": 256,
-                    "output": 64
-                },
-                {
-                    "type": "relu"
-                },
-                {
-                    "type": "linear",
-                    "input": 64,
-                    "output": 5
-                }
-            ]
+            "network_size": [32,64,32]
         },  # extra options to pass to your model
     }
 })

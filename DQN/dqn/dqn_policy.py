@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from ray.rllib.models import ModelCatalog
 from ray.rllib.policy import Policy
+from torch.nn import MSELoss
 
 
 class DQNPolicy(Policy):
@@ -16,13 +17,27 @@ class DQNPolicy(Policy):
         self.observation_space = observation_space
         self.action_space = action_space
         self.config = config
-
-        self.lr = self.config["lr"]  # Extra options need to be added in dqn.py
-        self.discount = self.config["discount"]
+        self.action_shape = action_space.n
 
         # GPU settings
         self.use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if self.use_cuda else "cpu")
+        self.dtype_f = torch.FloatTensor
+        self.dtype_l = torch.LongTensor
+        self.dtype_b = torch.BoolTensor
+        if self.use_cuda:
+            self.dtype_f = torch.cuda.FloatTensor
+            self.dtype_l = torch.cuda.LongTensor
+            self.dtype_b = torch.cuda.BoolTensor
+
+        self.lr = self.config["lr"]  # Extra options need to be added in dqn.py
+        self.discount = torch.tensor(self.config["discount"]).to(self.device, non_blocking=True)
+        self.buffer_batch = self.config["buffer_batch"]
+        self.epsilon = self.config["epsilon"]
+        self.min_epsilon = self.config["min_epsilon"]
+        self.decay = self.config["decay"]
+
+        self.replay_buffer = deque(maxlen=self.config["bufferlen"])
 
         self.dqn_model = ModelCatalog.get_model_v2(
             obs_space=self.observation_space,
@@ -32,12 +47,8 @@ class DQNPolicy(Policy):
             model_config=self.config["dqn_model"],
             framework="torch",
         ).to(self.device, non_blocking=True)
-        self.replay_buffer = deque(maxlen=self.config["bufferlen"])
-        self.buffer_batch = self.config["buffer_batch"]
-        self.optim = torch.optim.Adam(self.dqn_model.parameters(), self.lr)
-        self.epsilon = self.config["epsilon"]
-        self.min_epsilon = self.config["min_epsilon"]
-        self.decay = self.config["decay"]
+        self.MSE_loss_fn = MSELoss(reduction='mean')
+        self.optimizer = torch.optim.Adam(self.dqn_model.parameters(), lr=self.lr)
 
     def compute_actions(self,
                         obs_batch,
@@ -50,15 +61,19 @@ class DQNPolicy(Policy):
                         timestep=None,
                         **kwargs):
         # Worker function
+        obs_batch_t = torch.tensor(obs_batch).type(self.dtype_f)
+        q_value_batch_t = self.dqn_model(obs_batch_t)
+        action_batch_t = torch.argmax(q_value_batch_t, axis=1)
 
-        self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
-        if random.random() < self.epsilon:
-            return [self.action_space.sample() for _ in obs_batch], [], {}
-        else:
-            obs_batch_t = torch.tensor(obs_batch).type(torch.FloatTensor)
-            value = self.dqn_model(obs_batch_t)
-            indices = torch.max(value, 1)[1]
-            return indices.numpy(), [], {}
+        for index in range(len(action_batch_t)):
+            self.epsilon *= self.decay
+            if self.epsilon < self.min_epsilon:
+                self.epsilon = self.min_epsilon
+            if np.random.random() < self.epsilon:
+                action_batch_t[index] = random.randint(0, self.action_shape - 1)
+
+        action = action_batch_t.cpu().detach().tolist()
+        return action, [], {}
 
     def learn_on_batch(self, samples):
         # Trainer function
@@ -82,41 +97,24 @@ class DQNPolicy(Policy):
         # concatenated (fusing sequences across batches can be unsafe).
         #   unroll_id
 
-        for i in range(len(samples["dones"])):
-            state = samples["obs"][i]
-            action = samples["actions"][i]
-            reward = samples["rewards"][i]
-            done = samples["dones"][i]
-            new_state = samples["new_obs"][i]
-            self.replay_buffer.append((state, action, reward, done, new_state))
+        obs_batch_t = torch.tensor(np.array(samples["obs"])).to(self.device, non_blocking=True).type(self.dtype_f)
+        rewards_batch_t = torch.tensor(np.array(samples["rewards"])).to(self.device, non_blocking=True).type(self.dtype_f)
+        new_obs_batch_t = torch.tensor(np.array(samples["new_obs"])).to(self.device, non_blocking=True).type(self.dtype_f)
+        actions_batch_t = torch.tensor(np.array(samples["actions"])).to(self.device, non_blocking=True).type(self.dtype_l)
+        dones_t = torch.tensor(np.array(samples["dones"])).to(self.device, non_blocking=True).type(self.dtype_b)
 
-        if len(self.replay_buffer) < self.buffer_batch:
-            sample_size = len(self.replay_buffer)
-        else:
-            sample_size = self.buffer_batch
-        batch = random.sample(list(self.replay_buffer), sample_size)
-        batch = list(zip(*batch))
-        obs_batch_t = torch.cat((torch.tensor(np.array(samples["obs"])).type(torch.FloatTensor),
-                                 torch.tensor(np.array(batch[0])).type(torch.FloatTensor)))
-        rewards_batch_t = torch.cat((torch.tensor(np.array(samples["rewards"])).type(torch.FloatTensor),
-                                     torch.tensor(np.array(batch[2])).type(torch.FloatTensor)))
-        new_obs_batch_t = torch.cat((torch.tensor(np.array(samples["new_obs"])).type(torch.FloatTensor),
-                                     torch.tensor(np.array(batch[4])).type(torch.FloatTensor)))
-        actions_batch_t = torch.cat((torch.tensor(np.array(samples["actions"])).type(torch.LongTensor),
-                                     torch.tensor(np.array(batch[1])).type(torch.LongTensor)))
-        dones_t = torch.cat((torch.tensor(np.array(samples["dones"])).type(torch.BoolTensor),
-                             torch.tensor(np.array(batch[3])).type(torch.BoolTensor)))
-
-        actions_batch_t = actions_batch_t.unsqueeze(-1)
-        guess = self.dqn_model(obs_batch_t).gather(1, actions_batch_t)
-        max_q = self.dqn_model(new_obs_batch_t).detach().max(1)[0]
-        max_q[dones_t] = 0
+        guess = self.dqn_model(obs_batch_t).gather(1, actions_batch_t.unsqueeze(-1)).squeeze(-1)
+        max_q = self.dqn_model(new_obs_batch_t).detach().max(1)[0].detach()
+        max_q[dones_t] = 0.0
         target = rewards_batch_t + (self.discount * max_q)
-        loss = F.mse_loss(guess, target.unsqueeze(1))
-        self.optim.zero_grad()
-        loss.backward()
-        self.optim.step()
-        return {"learner_stats": {"loss": loss.item()}}
+        target = target.detach()
+        loss_t = self.MSE_loss_fn(guess, target)
+
+        self.optimizer.zero_grad()
+        loss_t.backward()
+        self.optimizer.step()
+
+        return {"learner_stats": {"loss": loss_t.cpu().item()}}
 
     def get_weights(self):
         # Trainer function
