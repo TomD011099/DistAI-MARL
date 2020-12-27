@@ -22,22 +22,31 @@ class DQNPolicy(Policy):
         self.config = config
 
         self.lr = self.config["lr"]  # Extra options need to be added in dqn.py
-        self.discount = self.config["discount"]
+
 
         # GPU settings
         self.use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if self.use_cuda else "cpu")
+        self.dtype_f = torch.FloatTensor
+        self.dtype_l = torch.LongTensor
+        self.dtype_b = torch.BoolTensor
+        if self.use_cuda:
+            print("Using CUDA")
+            self.dtype_f = torch.cuda.FloatTensor
+            self.dtype_l = torch.cuda.LongTensor
+            self.dtype_b = torch.cuda.BoolTensor
 
         self.dqn_model = ModelCatalog.get_model_v2(
             obs_space=self.observation_space,
             action_space=self.action_space,
-            num_outputs=5,
+            num_outputs=4,
             name="DQNModel",
             model_config=self.config["dqn_model"],
             framework="torch",
         ).to(self.device, non_blocking=True)
         # self.replay_buffer = deque(maxlen=self.config["bufferlen"])
         # self.buffer_batch = self.config["buffer_batch"]
+        self.discount = torch.tensor(self.config["discount"]).to(self.device, non_blocking=True)
         self.optim = torch.optim.Adam(self.dqn_model.parameters(), lr=self.lr)
         self.MSE_loss_fn = MSELoss(reduction='mean')
         self.epsilon = self.config["epsilon"]
@@ -146,14 +155,14 @@ class DQNPolicy(Policy):
         dones_t = torch.cat((torch.tensor(np.array(samples["dones"])).type(torch.BoolTensor),
                              torch.tensor(np.array(batch[3])).type(torch.BoolTensor)))"""
 
-        obs_batch_t = torch.tensor(np.array(samples["obs"])).to(self.device, non_blocking=True).type(torch.FloatTensor)
+        obs_batch_t = torch.tensor(np.array(samples["obs"])).to(self.device, non_blocking=True).type(self.dtype_f)
         new_obs_batch_t = torch.tensor(np.array(samples["new_obs"])).to(self.device, non_blocking=True).type(
-            torch.FloatTensor)
+            self.dtype_f)
         rewards_batch_t = torch.tensor(np.array(samples["rewards"])).to(self.device, non_blocking=True).type(
-            torch.FloatTensor)
+            self.dtype_f)
         actions_batch_t = torch.tensor(np.array(samples["actions"])).to(self.device, non_blocking=True).type(
-            torch.LongTensor)
-        dones_t = torch.tensor(np.array(samples["dones"])).to(self.device, non_blocking=True).type(torch.BoolTensor)
+            self.dtype_l)
+        dones_t = torch.tensor(np.array(samples["dones"])).to(self.device, non_blocking=True).type(self.dtype_b)
 
         # actions_batch_t = actions_batch_t.unsqueeze(-1)
         guess = self.dqn_model(obs_batch_t).gather(1, actions_batch_t.unsqueeze(-1)).squeeze(-1)

@@ -8,28 +8,30 @@ from ray.tune.registry import register_env
 from DQN.dqn import DQNTrainer, DQNModel
 from Env import predatorEnv
 from Env.predatorEnv import PredatorEnv
+from Env.preyEnv import PreyEnv
 
 
 def env_creator(env_config):
-    return PredatorEnv((30, 30), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
+    return PreyEnv((30, 30), (17, 6), 100, (20, 20, 30, 10, 40), 20, 200)
+    # return PredatorEnv((30, 30), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
 
 
 if __name__ == "__main__":
     ray.init()
-    register_env("predEnv", env_creator)
+    register_env("preyEnv", env_creator)
     ModelCatalog.register_custom_model("DQNModel", DQNModel)
 
     tune.run(
         DQNTrainer,
         # checkpoint_freq=10,
         checkpoint_at_end=True,
-        stop={"episodes_total": 20000},
+        stop={"episodes_total": 10000},
         config={
             "num_gpus": 0,
             "num_workers": 1,
             "framework": "torch",
             "rollout_fragment_length": 50,
-            "env": "predEnv",
+            "env": "preyEnv",
 
             ########################################
             # Parameters Agent
@@ -45,8 +47,8 @@ if __name__ == "__main__":
             # "epsilon": tune.grid_search([0.7, 0.8, 0.9, 1]),
             "decay": 0.99998,
             # "decay": tune.grid_search([0.999999, 0.9999999]),
-            # "min_epsilon": 0.01,
-            "min_epsilon": tune.grid_search([0.01, 0.05, 0.1, 0.15, 0.2, 1]),
+            # "min_epsilon": 1,
+            "min_epsilon": tune.grid_search([0.01, 1]),
 
             "dqn_model": {
                 "custom_model": "DQNModel",

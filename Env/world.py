@@ -180,14 +180,20 @@ class World:
         for p in self.prey_list:
             name = "prey_" + str(p.id)
             closest = self.closest_pred(p)
-            out[name] = [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
+            if not closest:
+                out[name] = [p.age, 0, 0]
+            else:
+                out[name] = [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
+        for p in self.dead_prey:
+            name = "prey_" + str(p.id)
+            out[name] = [0, 0, 0]
         return out
 
     def get_rewards(self):
         out = {}
         for p in self.predator_list:
             name = "pred_" + str(p.id)
-            out[name] = len(self.predator_list)*100 + p.en_lvl
+            out[name] = len(self.predator_list) * 100 + p.en_lvl
 
         for p in self.prey_list:
             name = "prey_" + str(p.id)
@@ -199,7 +205,7 @@ class World:
         out = {}
         for p in self.predator_list:
             name = "pred_" + str(p.id)
-            out[name] = len(self.predator_list) + (p.en_lvl/1000)
+            out[name] = len(self.predator_list) + (p.en_lvl / 1000)
         for p in self.dead_predators:
             name = "pred_" + str(p.id)
             out[name] = 0
@@ -210,6 +216,9 @@ class World:
         for p in self.prey_list:
             name = "prey_" + str(p.id)
             out[name] = len(self.prey_list)
+        for p in self.dead_prey:
+            name = "prey_" + str(p.id)
+            out[name] = 0
         return out
 
     def get_dones(self):
@@ -232,7 +241,11 @@ class World:
         return out
 
     def get_prey_dones(self):
-        return {"__all__": self.done}
+        out = {"__all__": self.done}
+        for p in self.dead_prey:
+            name = "prey_"+str(p.id)
+            out[name] = True
+        return out
 
     def render(self):
         self.simulator.update(self.predator_list, self.prey_list)

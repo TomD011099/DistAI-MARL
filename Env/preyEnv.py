@@ -2,10 +2,12 @@ import gym
 import numpy as np
 
 from gym import spaces
+from ray.rllib.env import MultiAgentEnv
+
 from Env.world import World
 
 
-class PreyEnv(gym.Env):
+class PreyEnv(gym.Env, MultiAgentEnv):
     def __init__(self, map_size, prey_settings, prey_amount, pred_settings, pred_amount, max_t):
         self.world_settings = map_size, prey_settings, prey_amount, pred_settings, pred_amount, max_t
         self.world = World(map_size, prey_settings, prey_amount, pred_settings, pred_amount, max_t)
@@ -18,14 +20,11 @@ class PreyEnv(gym.Env):
     def reset(self):
         self.world = World(self.world_settings[0], self.world_settings[1], self.world_settings[2],
                            self.world_settings[3], self.world_settings[4], self.world_settings[5])
-        self.world.get_pred_obs()
+        return self.world.get_prey_obs()
 
     def step(self, actions):
         self.world.step(actions=actions, env_type="prey")
-        out = {
-            "obs": self.world.get_prey_obs(),
-            "rewards": self.world.get_prey_rewards(),
-            "dones": self.world.get_prey_dones()
-        }
+        return self.world.get_prey_obs(), self.world.get_prey_rewards(), self.world.get_prey_dones(), {}
 
-        return out
+    def render(self, **kwargs):
+        self.world.render()

@@ -29,7 +29,7 @@ DEFAULT_CONFIG = with_common_config({
             "layers": [
                 {
                     "type": "linear",
-                    "input": 4,
+                    "input": 3,
                     "output": 32
                 },
                 {
@@ -54,7 +54,7 @@ DEFAULT_CONFIG = with_common_config({
                 {
                     "type": "linear",
                     "input": 32,
-                    "output": 5
+                    "output": 4
                 }
             ]
         },  # extra options to pass to your model
