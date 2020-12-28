@@ -216,13 +216,13 @@ class World:
 
     def get_dones(self):
         out = {"__all__": self.done}
-        for p in self.predator_list:
+        for p in self.dead_predators:
             name = "pred_" + str(p.id)
-            out[name] = self.done
+            out[name] = True
 
-        for p in self.prey_list:
+        for p in self.dead_prey:
             name = "prey_" + str(p.id)
-            out[name] = self.done
+            out[name] = True
 
         return out
 
