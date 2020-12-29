@@ -1,25 +1,26 @@
-import pygame
 import copy
 import math
+
+import pygame
 
 
 class Simulator:
     def __init__(self, map_size):
         x_max, y_max = map_size
 
-        x_zoom = math.floor(1920/x_max)
-        y_zoom = math.floor(1080/y_max)
+        x_zoom = math.floor(1920 / x_max)
+        y_zoom = math.floor(1080 / y_max)
         self.zoom = min(x_zoom, y_zoom)
 
         pygame.init()
         size = x_max * self.zoom, y_max * self.zoom
         self.screen = pygame.display.set_mode(size)
 
-        self.prey_img = pygame.image.load("img/Prey.png")
+        self.prey_img = pygame.image.load("../Env/img/Prey.png")
         self.prey_img = pygame.transform.scale(self.prey_img, (self.zoom, self.zoom))
         self.prey_rect = self.prey_img.get_rect()
 
-        self.pred_img = pygame.image.load("img/Pred.png")
+        self.pred_img = pygame.image.load("../Env/img/Pred.png")
         self.pred_img = pygame.transform.scale(self.pred_img, (self.zoom, self.zoom))
         self.pred_rect = self.pred_img.get_rect()
 

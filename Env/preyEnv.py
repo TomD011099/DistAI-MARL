@@ -1,9 +1,7 @@
 import gym
 import numpy as np
-
 from gym import spaces
 from ray.rllib.env import MultiAgentEnv
-
 from Env.world import World
 
 

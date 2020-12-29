@@ -1,9 +1,8 @@
-import random
 import math
-import numpy as np
+import random
 
-from Env.prey import Prey
 from Env.predator import Predator
+from Env.prey import Prey
 from Env.simulator import Simulator
 from Env.stats import Stats
 
@@ -32,7 +31,7 @@ class World:
             self.prey_list.append(Prey(self, self.map_size, self.prey_id_cnt, self.prey_settings))
             self.prey_id_cnt += 1
 
-        # self.stats = Stats(prey_amount, pred_amount)
+        self.stats = Stats(prey_amount, pred_amount)
 
         # self.simulator = Simulator(map_size)
 
@@ -44,7 +43,7 @@ class World:
         self.dead_predators.clear()
 
         for p in self.prey_list:
-            if env_type == "prey":
+            if env_type == "prey" or env_type == "multi":
                 name = "prey_" + str(p.id)
                 res = p.step(actions[name])
             else:
@@ -58,7 +57,7 @@ class World:
             self.new_prey(p)
 
         for p in self.predator_list:
-            if env_type == "pred":
+            if env_type == "pred" or env_type == "multi":
                 name = "pred_" + str(p.id)
                 res = p.step(actions[name])
             else:
@@ -71,6 +70,7 @@ class World:
                 new_predators.append(res[1][1])
             if res[2]:
                 self.dead_predators.append(p)
+
         for p in new_predators:
             self.new_pred(p)
 
@@ -79,7 +79,6 @@ class World:
         for p in self.dead_predators:
             self.del_pred(p)
 
-        # self.stats.update(len(self.prey_list), len(self.predator_list), self.t)
         self.done = (len(self.predator_list) == 0 or len(self.prey_list) == 0) or self.t >= self.max_t
         return self.done
 
@@ -148,16 +147,8 @@ class World:
         self.prey_list.remove(prey)
 
     def get_obs(self):
-        out = {}
-        for p in self.predator_list:
-            name = "pred_" + str(p.id)
-            closest = self.closest_prey(p)
-            out[name] = [p.age, p.en_lvl, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
-
-        for p in self.prey_list:
-            name = "prey_" + str(p.id)
-            closest = self.closest_pred(p)
-            out[name] = [p.age, closest.pos[0] - p.pos[0], closest.pos[1] - p.pos[1]]
+        out = self.get_pred_obs()
+        out.update(self.get_prey_obs())
 
         return out
 
@@ -193,11 +184,16 @@ class World:
         out = {}
         for p in self.predator_list:
             name = "pred_" + str(p.id)
-            out[name] = len(self.predator_list) * 100 + p.en_lvl
-
+            out[name] = len(self.predator_list) + (p.en_lvl / 1000)
+        for p in self.dead_predators:
+            name = "pred_" + str(p.id)
+            out[name] = 0
         for p in self.prey_list:
             name = "prey_" + str(p.id)
             out[name] = len(self.prey_list)
+        for p in self.dead_prey:
+            name = "prey_" + str(p.id)
+            out[name] = 0
 
         return out
 
@@ -222,14 +218,14 @@ class World:
         return out
 
     def get_dones(self):
-        out = {}
-        for p in self.predator_list:
+        out = {"__all__": self.done}
+        for p in self.dead_predators:
             name = "pred_" + str(p.id)
-            out[name] = self.done
+            out[name] = True
 
-        for p in self.prey_list:
+        for p in self.dead_prey:
             name = "prey_" + str(p.id)
-            out[name] = self.done
+            out[name] = True
 
         return out
 
@@ -248,4 +244,5 @@ class World:
         return out
 
     def render(self):
+        self.stats.update(len(self.prey_list), len(self.predator_list), self.t)
         self.simulator.update(self.predator_list, self.prey_list)

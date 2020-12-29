@@ -18,6 +18,7 @@ if __name__ == "__main__":
     stop = False
     while not stop:
         stop = world.step()
+        world.render()
         time.sleep(0.1)
 
     world.stats.show_hist()

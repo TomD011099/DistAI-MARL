@@ -24,39 +24,9 @@ DEFAULT_CONFIG = with_common_config({
     "min_epsilon": 0.05,
 
     "dqn_model": {
-        "custom_model": "?",
+        "custom_model": "DQNModel",
         "custom_model_config": {
-            "layers": [
-                {
-                    "type": "linear",
-                    "input": 3,
-                    "output": 32
-                },
-                {
-                    "type": "relu"
-                },
-                {
-                    "type": "linear",
-                    "input": 32,
-                    "output": 64
-                },
-                {
-                    "type": "relu"
-                },
-                {
-                    "type": "linear",
-                    "input": 64,
-                    "output": 32
-                },
-                {
-                    "type": "relu"
-                },
-                {
-                    "type": "linear",
-                    "input": 32,
-                    "output": 4
-                }
-            ]
+            "network_size": [32,64,32]
         },  # extra options to pass to your model
     }
 })
