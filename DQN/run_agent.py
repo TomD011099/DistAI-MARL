@@ -12,7 +12,7 @@ from Env.multiEnv import MultiEnv
 
 
 def env_creator(config):
-    return MultiEnv((20, 20), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
+    return MultiEnv((30, 30), (17, 6), 100, (20, 20, 30, 10, 40), 20, 500)
 
 
 def policy_mapping_fn(agent_id):
